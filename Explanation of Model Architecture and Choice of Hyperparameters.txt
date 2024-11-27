@@ -1,85 +1,53 @@
-1. Model Architecture
-1.1 LSTM Architecture
+Model Architecture
 
-The Long Short-Term Memory (LSTM) network is a type of recurrent neural network (RNN) that overcomes the vanishing gradient problem seen in traditional RNNs. It achieves this by using a gating mechanism to control the flow of information through the network.
+    Input Size:
+        The input to the model consists of a 60-day sequence of stock features: Open, High, Low, Close, and Volume.
+        Input dimensions: (batch_size, sequence_length=60, features=5).
 
-    Input Layer:
-        Accepts sequences of 60 days (time steps) of stock data, with 5 features (Open, High, Low, Close, Volume).
-        The input shape is (batch_size, 60, 5).
+Choice of Hyperparameters
 
-    LSTM Layers:
-        Two stacked LSTM layers with 64 hidden units (optimized hyperparameter).
-        The first layer outputs sequences (return_sequences=True), which are processed by the second layer.
+    Optimization Process:
+        The hyperparameters were optimized using Optuna, a powerful hyperparameter optimization library.
+        Objective functions were defined for both LSTM and GRU models to minimize validation loss.
 
-    Dense Output Layer:
-        A fully connected layer maps the final output of the LSTM to a single value representing the predicted closing price for the next day.
+    Selected Hyperparameters:
+        LSTM:
+            num_layers: 3
+            hidden_size: 116
+            learning_rate: 0.00406
+            batch_size: 16
+        GRU:
+            num_layers: 2
+            hidden_size: 71
+            learning_rate: 0.00616
+            batch_size: 16
 
-    Activation Function:
-        Linear activation in the dense layer to predict continuous values.
+    Explanation of Choices:
+        Number of Layers:
+            More layers allow the model to learn deeper temporal dependencies.
+        Hidden Size:
+            Larger hidden sizes enable the model to capture complex patterns but can lead to overfitting. A balance was achieved through optimization.
+        Learning Rate:
+            A learning rate in the range of 1e-4 to 1e-2 ensures effective gradient descent convergence.
+        Batch Size:
+            Smaller batch sizes (e.g., 16) balance computational efficiency and gradient noise for better generalization.
 
-1.2 GRU Architecture
+Training Enhancements
 
-The Gated Recurrent Unit (GRU) is a simplified variant of LSTM with fewer gates, making it computationally more efficient while maintaining comparable performance.
-
-    Input Layer:
-        Same as LSTM, with sequences of shape (batch_size, 60, 5).
-
-    GRU Layers:
-        Two GRU layers with 128 hidden units (optimized hyperparameter).
-        Like the LSTM, the first GRU layer outputs sequences (return_sequences=True), while the second GRU layer outputs the final hidden state.
-
-    Dense Output Layer:
-        Maps the final GRU output to the next day’s closing price.
-
-2. Choice of Hyperparameters
-2.1 Hyperparameter Optimization
-
-The following hyperparameters were optimized using a grid search strategy, combined with a validation set to ensure generalizability:
-
-    Number of Layers:
-        Choice: 2 layers for both LSTM and GRU.
-        Rationale: Stacking layers improves the model's ability to capture complex temporal dependencies, but more than 2 layers led to overfitting.
-
-    Hidden Units:
-        LSTM: 64 units per layer.
-        GRU: 128 units per layer.
-        Rationale: These values provided a balance between model complexity and computational efficiency.
-
-    Learning Rate:
-        LSTM: 0.001
-        GRU: 0.0005
-        Rationale: Smaller learning rates were tested but led to slower convergence, while larger rates caused divergence. These values offered stable and effective convergence.
-
-    Batch Size:
-        LSTM: 32
-        GRU: 16
-        Rationale: Larger batch sizes stabilized LSTM training, while smaller batches worked better for GRU due to its lightweight architecture.
-
-    Number of Epochs:
-        Choice: 20 epochs for both models.
-        Rationale: Early stopping was implemented to avoid overfitting, and 20 epochs allowed the models to converge sufficiently.
-
-    Optimizer:
-        Adam Optimizer was chosen for both models due to its adaptive learning rate capabilities, which led to faster convergence.
+    Early Stopping:
+        Monitors validation loss during training and stops the process when no significant improvement is observed for 3 consecutive epochs.
+        Prevents overfitting and reduces training time.
 
     Loss Function:
-        Mean Squared Error (MSE) was used because it is well-suited for regression tasks.
+        Mean Squared Error (MSE) was chosen to measure the prediction error for the continuous target variable.
 
-3. Evaluation Metrics
+    Evaluation Metrics:
+        MSE: Measures average squared prediction errors.
+		
+Improvements
 
-    Mean Squared Error (MSE):
-        Measures the average squared difference between predicted and actual closing prices.
-        Lower values indicate better model performance.
-
-    Visual Comparison:
-        Predictions were plotted against actual prices to visually assess how well the models captured trends and patterns.
-
-4. Results
-
-    LSTM:
-        Test MSE: Achieved a stable performance with low error, showing strong predictive capabilities for temporal patterns.
-        Learning curves indicated minimal overfitting, validating the choice of hyperparameters.
-
-    GRU:
-        Test MSE: Slightly better than LSTM in some runs, likely due to its simpler architecture, which prevented overfitting on this dataset.
-        Faster convergence due to fewer parameters.
+    Training Data Augmentation:
+        Sequences were generated using a rolling window over historical data to maximize training samples.
+    Normalization:
+        MinMaxScaler ensured all features were scaled to [0, 1], allowing models to converge faster and avoid dominance of high-value features.
+		
